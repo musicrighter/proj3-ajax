@@ -49,50 +49,57 @@
   {% endif %}
 {% endwith %}
 
-<!-- Design on bootstrap grid -->
 <form role="form">
-<div class="row">
-  <div class="col-md-2">
-    <input type="text" class="form-control"
-     name="miles" value="Distance in miles"/>
-  </div>
-  <div class="col-md-4">
-    <input type="text" class="form-control"
-      name="location" value="location" />
-  </div>
-  <div class="col-md-4">
-    <span class="times form-control">(times)</span>
-  </div>
-</div>
+  <div class="row">
+    <div class="distance col-xs-12">
+      <label class="col-md-3" for="date/time">Starting date and time:</label>
+        <input class="col-md-2" id="date" placeholder="MM/DD/YYYY">
+        <input class="col-md-2" id="time" placeholder="HH:MM (24 hour format)">
+    </div>
 
-<div class="row">
-  <div class="col-md-2">
-    <input type="text" class="form-control"
-     name="miles" value="Distance in miles"/>
-  </div>
-  <div class="col-md-4">
-    <input type="text" class="form-control"
-      name="location" value="location" />
-  </div>
-  <div class="col-md-4">
-    <span class="times form-control">(times)</span>
-  </div>
-</div>
+    <div class="distance col-xs-12">
+      <label class="col-xs-3">Unit for distances:</label>
+        <select class="control-label col-md-1" id="distance">
+          <option>MPH</option>
+          <option>KM</option>
+        </select>
+    </div>
 
-<div class="row">
-  <div class="col-md-2">
-    <input type="text" class="form-control"
-     name="miles" value="Distance in miles"/>
+    <div class="distance col-xs-12">
+      <label class="col-xs-3">Race distance:</label>
+        <select class="control-label col-md-1" id="distance">
+          <option>200</option>
+          <option>300</option>
+          <option>400</option>
+          <option>600</option>
+          <option>1000</option>
+        </select>km
+    </div>
   </div>
-  <div class="col-md-4">
-    <input type="text" class="form-control"
-      name="location" value="location" />
-  </div>
-  <div class="col-md-4">
-    <span class="times form-control">(times)</span>
-  </div>
-</div>
 </form>
+
+{% for i in range(10) %}
+<b>Checkpoint #{{ i+1 }}</b>
+  <div class="row" id ="{{ i+1 }}">
+    <div class="col-md-2">
+      <input type="text" class="form-control"
+      name="miles" placeholder="Distance"/>
+    </div>
+    <div class="col-md-4">
+      <input type="text" class="form-control"
+      name="location" placeholder="location" />
+    </div>
+    <div class="col-md-2">
+      Open
+      <span class="open_time form-control">(open times)</span>
+    </div>
+    <div class="col-md-2">
+      Close
+      <span class="close_time form-control">(close times)</span>
+    </div>
+  </div>
+{% endfor %}
+
 
 <script type="text/javascript">
 
@@ -107,7 +114,10 @@
           function(){
               var e_miles = $(this).val();
 
-              var target = $(this).parents(".row").find(".times");
+              var e_date = document.getElementById("date").value
+              var e_time = document.getElementById("time").value
+              var open = $(this).parents(".row").find(".open_time");
+              var close = $(this).parents(".row").find(".close_time");
 
               // DEBUG: How do I replace the 'times' field?
               // alert("Content of the field I want to change: " +
@@ -116,12 +126,12 @@
               // AJAX request
               $.getJSON($SCRIPT_ROOT + '/_calc_times',
                   // The object to pass to the server
-                  { miles: e_miles },
+                  { miles: e_miles, date: e_date, time: e_time },
                   // The function to call with the response
                   function(data) {
-                     var times = data.result;
                      // alert("Got a response: " +  times);
-                     target.text(times);
+                     open.text(data.open_times);
+                     close.text(data.close_times);
                   }); // End of the call to getJSON
           });  // End of the function to be called when field changes
               

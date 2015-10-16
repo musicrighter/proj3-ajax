@@ -68,7 +68,27 @@ def calc_times():
   """
   app.logger.debug("Got a JSON request");
   miles = request.args.get('miles', 0, type=int)
-  return jsonify(result=miles * 2)
+  date = request.args.get('date', 0, type=str)
+  time = request.args.get('time', 0, type=str)
+
+  if format_arrow_date(date) != "(bad date)" and date != "":
+    date = format_arrow_date(date)
+  else:
+    date = format_arrow_date(arrow.now())
+
+  if format_arrow_time(time) != "(bad time)" and time != "":
+    time = format_arrow_time(time)
+  else:
+    time = format_arrow_time(arrow.now())
+
+  start = arrow.get(date + " " + time, "ddd MM/DD/YYYY HH:mm")
+  
+  if miles < 200:
+    o_min = miles/15*60
+    c_min = miles/34*60
+    o_fin = start.replace(minutes=+o_min)
+    c_fin = start.replace(minutes=+c_min)
+    return jsonify(open_times=o_fin, close_times=c_fin)
  
 #################
 #
@@ -88,7 +108,7 @@ def format_arrow_date( date ):
 def format_arrow_time( time ):
     try: 
         normal = arrow.get( date )
-        return normal.format("hh:mm")
+        return normal.format("HH:mm")
     except:
         return "(bad time)"
 
