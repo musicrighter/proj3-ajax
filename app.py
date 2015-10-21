@@ -67,28 +67,70 @@ def calc_times():
   Expects one URL-encoded argument, the number of miles. 
   """
   app.logger.debug("Got a JSON request");
-  miles = request.args.get('miles', 0, type=int)
+  miles = request.args.get('miles', 0, type=float)
   date = request.args.get('date', 0, type=str)
   time = request.args.get('time', 0, type=str)
 
-  if format_arrow_date(date) != "(bad date)" and date != "":
-    date = format_arrow_date(date)
+  if format_arrow_date(date) != "(bad date)":
+    date = format_arrow_date(date).format('ddd MM/DD/YYYY')
   else:
-    date = format_arrow_date(arrow.now())
+    date = arrow.get('12/31/2012', 'MM/DD/YYYY').format('ddd MM/DD/YYYY')
 
-  if format_arrow_time(time) != "(bad time)" and time != "":
-    time = format_arrow_time(time)
+  if format_arrow_time(time) != "(bad time)":
+    time = format_arrow_time(time).format("HH:mm")
   else:
-    time = format_arrow_time(arrow.now())
+    time = arrow.get('00:00', 'HH:mm').format("HH:mm")
 
-  start = arrow.get(date + " " + time, "ddd MM/DD/YYYY HH:mm")
-  
+  start_o = arrow.get(date + " " + time, "ddd MM/DD/YYYY HH:mm")
+  start_c = start_o
+
   if miles < 200:
-    o_min = miles/15*60
-    c_min = miles/34*60
-    o_fin = start.replace(minutes=+o_min)
-    c_fin = start.replace(minutes=+c_min)
+    o_min = (miles/34)*60
+    c_min = (miles/15)*60
+
+  elif miles == 200:
+    o_min = (miles/34)*60
+    c_min = 13*60 + 30
+
+  elif miles < 400:
+    o_min = (200/34 + ((miles-200)/32))*60
+    c_min = (miles/15)*60
+
+  elif miles == 400:
+    o_min = (200/34 + ((miles-200)/32))*60
+    c_min = 27*60
+
+  elif miles < 600:
+    o_min = (200/34 + 200/32 + ((miles-400)/30))*60
+    c_min = (miles/15)*60
+
+  elif miles == 600:
+    o_min = (200/34 + 200/32 + ((miles-400)/30))*60
+    c_min = 40*60
+
+  elif miles < 1000:
+    o_min = (200/34 + 200/32 + 200/30 + ((miles-600)/28))*60
+    c_min = (600/15 + ((miles-600)/11.428))*60
+
+  elif miles == 1000:
+    o_min = (200/34 + 200/32 + 200/30 + ((miles-600)/28))*60
+    c_min = 75*60
+
+  elif miles < 1300:
+    o_min = (200/34 + 200/32 + 200/30 + 200/28 + ((miles-1000)/26))*60
+    c_min = (600/15 + 200/11.428 + ((miles-1000)/13.333))*60
+
+  # elif miles == 1300:
+  #   o_min = (200/34 + 200/32 + 200/30 + 200/28 + ((miles-1000)/26))*60
+  #   c_min = 75*60
+
+  else:
+    o_fin = c_fin = "Error: check distance!"
     return jsonify(open_times=o_fin, close_times=c_fin)
+
+  o_fin = str(start_o.replace(minutes=+o_min, seconds=+30).format("ddd MM/DD/YYYY HH:mm"))
+  c_fin = str(start_c.replace(minutes=+c_min, seconds=+30).format("ddd MM/DD/YYYY HH:mm"))
+  return jsonify(open_times=o_fin, close_times=c_fin)
  
 #################
 #
@@ -99,16 +141,14 @@ def calc_times():
 @app.template_filter( 'fmtdate' )
 def format_arrow_date( date ):
     try: 
-        normal = arrow.get( date )
-        return normal.format("ddd MM/DD/YYYY")
+        return arrow.get(date, "MM/DD/YYYY")
     except:
         return "(bad date)"
 
 @app.template_filter( 'fmttime' )
 def format_arrow_time( time ):
     try: 
-        normal = arrow.get( date )
-        return normal.format("HH:mm")
+        return arrow.get(time, "HH:mm")
     except:
         return "(bad time)"
 

@@ -79,15 +79,13 @@
 </form>
 
 {% for i in range(10) %}
-<b>Checkpoint #{{ i+1 }}</b>
+  <b>Checkpoint #{{ i+1 }}</b>
   <div class="row" id ="{{ i+1 }}">
     <div class="col-md-2">
-      <input type="text" class="form-control"
-      name="miles" placeholder="Distance"/>
+      <input type="text" class="form-control" name="miles" placeholder="Distance"/>
     </div>
     <div class="col-md-4">
-      <input type="text" class="form-control"
-      name="location" placeholder="location" />
+      <input type="text" class="form-control" name="location" placeholder="location" />
     </div>
     <div class="col-md-2">
       Open
