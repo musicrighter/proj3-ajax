@@ -67,16 +67,21 @@ def calc_times():
   Expects one URL-encoded argument, the number of miles. 
   """
   app.logger.debug("Got a JSON request");
-  miles = request.args.get('miles', 0, type=float)
+  distance = request.args.get('distance', 0, type=float)
   date = request.args.get('date', 0, type=str)
   time = request.args.get('time', 0, type=str)
+  unit = request.args.get('unit', 0, type=str)
+  brevet = request.args.get('brevet', 0, type=int)
 
-  if format_arrow_date(date) != "(bad date)":
+  if unit == 'Miles':     #unit conversion
+    distance *= 1.60934
+
+  if format_arrow_date(date) != "(bad date)":                 #Validate date and set date otherwise
     date = format_arrow_date(date).format('ddd MM/DD/YYYY')
   else:
     date = arrow.get('12/31/2012', 'MM/DD/YYYY').format('ddd MM/DD/YYYY')
 
-  if format_arrow_time(time) != "(bad time)":
+  if format_arrow_time(time) != "(bad time)":                 #Validate time and set time otherwise
     time = format_arrow_time(time).format("HH:mm")
   else:
     time = arrow.get('00:00', 'HH:mm').format("HH:mm")
@@ -84,49 +89,44 @@ def calc_times():
   start_o = arrow.get(date + " " + time, "ddd MM/DD/YYYY HH:mm")
   start_c = start_o
 
-  if miles < 200:
-    o_min = (miles/34)*60
-    c_min = (miles/15)*60
+  final_calc = [(200, 13.5), (300, 20.0), (400, 27.0), (600, 40.0),   (1000, 75.0)]
+  open_calc =  [(200, 34.0), (200, 32.0), (200, 30.0), (400, 28.0),   (300,  26.0)]
+  close_calc = [(200, 15.0), (200, 15.0), (200, 15.0), (400, 11.428), (300,  13.333)]
 
-  elif miles == 200:
-    o_min = (miles/34)*60
-    c_min = 13*60 + 30
+  def close_times(distance, brevet):
+    end_time = 0
+    if distance == 0:
+      return 60
+    if int(distance) >= brevet:
+      for group, time in final_calc:
+        if brevet == group:
+          return time*60
+    else:
+      for group, time in close_calc:
+        if group <= distance and distance > 0:
+          end_time += (group/time)*60
+          distance -= group
+        elif distance == 0:
+          return end_time
+        else:
+          return end_time + (distance/time)*60
 
-  elif miles < 400:
-    o_min = (200/34 + ((miles-200)/32))*60
-    c_min = (miles/15)*60
+  def open_times(distance, brevet):
+    end_time = 0
+    over = False
+    if distance > brevet:
+      over = True
+    for group, time in open_calc:
+      if group <= distance and distance > 0:
+        end_time += (group/time)*60
+        distance -= group
+      elif distance == 0 or over == True:
+          return end_time
+      else:
+        return end_time + (distance/time)*60
 
-  elif miles == 400:
-    o_min = (200/34 + ((miles-200)/32))*60
-    c_min = 27*60
-
-  elif miles < 600:
-    o_min = (200/34 + 200/32 + ((miles-400)/30))*60
-    c_min = (miles/15)*60
-
-  elif miles == 600:
-    o_min = (200/34 + 200/32 + ((miles-400)/30))*60
-    c_min = 40*60
-
-  elif miles < 1000:
-    o_min = (200/34 + 200/32 + 200/30 + ((miles-600)/28))*60
-    c_min = (600/15 + ((miles-600)/11.428))*60
-
-  elif miles == 1000:
-    o_min = (200/34 + 200/32 + 200/30 + ((miles-600)/28))*60
-    c_min = 75*60
-
-  elif miles < 1300:
-    o_min = (200/34 + 200/32 + 200/30 + 200/28 + ((miles-1000)/26))*60
-    c_min = (600/15 + 200/11.428 + ((miles-1000)/13.333))*60
-
-  # elif miles == 1300:
-  #   o_min = (200/34 + 200/32 + 200/30 + 200/28 + ((miles-1000)/26))*60
-  #   c_min = 75*60
-
-  else:
-    o_fin = c_fin = "Error: check distance!"
-    return jsonify(open_times=o_fin, close_times=c_fin)
+  o_min = open_times(distance, brevet)
+  c_min = close_times(distance, brevet)
 
   o_fin = str(start_o.replace(minutes=+o_min, seconds=+30).format("ddd MM/DD/YYYY HH:mm"))
   c_fin = str(start_c.replace(minutes=+c_min, seconds=+30).format("ddd MM/DD/YYYY HH:mm"))
