@@ -40,7 +40,7 @@ app.logger.setLevel(logging.DEBUG)
 
 @app.route("/")
 @app.route("/index")
-@app.route("/calc")
+@app.route("/index")
 def index():
   app.logger.debug("Main page entry")
   return flask.render_template('calc.html')
